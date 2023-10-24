@@ -202,22 +202,42 @@ class MOTIONCLIP(nn.Module):
             nspa, nats = classes.shape[:2]
             # y = torch.zeros(y_action_names.shape, dtype=int)
             y = clip_features
+            print("clip_features: ", clip_features.shape) # 24 x 512
+            print(nspa) # 1
+            print(nats) # 24
+
             if textual_labels is not None:
+                print("textual labels are not None")
                 y = np.array(textual_labels).reshape([-1])
+
+            
 
         if len(durations.shape) == 1:
             lengths = durations.to(self.device).repeat(nspa)
+            print("lenghts 1: ", lengths.shape)
         else:
-            lengths = durations.to(self.device).reshape(clip_features.shape[0])
+            lengths = durations.to(self.device).reshape(clip_features.shape[0])  # 24
+            print("lenghts 2: ", lengths.shape)
 
-        mask = self.lengths_to_mask(lengths)
+        mask = self.lengths_to_mask(lengths)  # 24 x 120, this is all trues - so evidently not to block out viewing future frames
+        print("mask: ", mask.shape)
+        print(torch.sum(mask * 1.0))
 
-        batch = {"z": clip_features,  # fact*z,
-                 "y": y,
-                 "mask": mask, "lengths": lengths}
+        batch = {"z": clip_features,  # fact*z, # 24 x 512
+                 
+                 "y": y,                # 24 x 12 just clip features as well, i.e. z and y are the same (at least for text2motion)
+                 "mask": mask, 
+                 "lengths": lengths}
+        
+
 
         if not is_clip_features:
             batch['y'] = y
+
+        print("batch")
+        print(torch.sum(batch['z']))
+        print(torch.sum(batch['y']))
+
 
         batch = self.decoder(batch)
 

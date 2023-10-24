@@ -116,28 +116,45 @@ class Decoder_TRANSFORMER(nn.Module):
         super().__init__()
 
         self.modeltype = modeltype
+        print("modeltype ", modeltype)
         self.njoints = njoints
+        print("njoints ", njoints)
         self.nfeats = nfeats
+        print("nfeats ", nfeats)
         self.num_frames = num_frames
+        print("num_frames ", num_frames)
         self.num_classes = num_classes
+        print("num_classes ", num_classes)
         
         self.pose_rep = pose_rep
+        print("pose_rep ", pose_rep)
         self.glob = glob
+        print("glob ", glob)
         self.glob_rot = glob_rot
+        print("glob_rot ", glob_rot)
         self.translation = translation
+        print("translation ", translation)
         
         self.latent_dim = latent_dim
+        print("latent_dim ", latent_dim)
         
         self.ff_size = ff_size
+        print("ff_size ", ff_size)
         self.num_layers = num_layers
+        print("num_layers ", num_layers)
         self.num_heads = num_heads
+        print("num_heads ", num_heads)
         self.dropout = dropout
+        print("dropout ", dropout)
 
         self.ablation = ablation
+        print("ablation ", ablation)
 
         self.activation = activation
+        print("activation ", activation)
                 
         self.input_feats = self.njoints*self.nfeats
+        print("self.input_feats ", self.input_feats)
 
         # only for ablation / not used in the final model
         if self.ablation == "zandtime":

@@ -304,7 +304,7 @@ def viz_clip_text(model, text_grid, epoch, params, folder):
     print(texts.shape)
     texts = []
     for i in range(24):
-        texts.append("spin around")
+        texts.append("side step")
     texts = np.array(texts, dtype=str)
     clip_tokens = clip.tokenize(texts).to(params['device'])
     print("clip_tokens ", clip_tokens.size())
@@ -348,7 +348,7 @@ def viz_clip_text(model, text_grid, epoch, params, folder):
     os.makedirs(tmp_path, exist_ok=True)
 
     # save_pkl(generation['output'], generation['output_xyz'], texts, finalpath.replace('.gif', '.pkl'))
-    joint_sequence = generation['output_xyz'][0, 0].reshape(24, 3, 60)
+    joint_sequence = generation['output_xyz'][0, 0].reshape(24, 3, params['num_frames'])
     joint_sequence = joint_sequence.cpu().numpy()
     print("joint_sequence ", joint_sequence.shape)
     parents, _ = GetSkeletonInformation("amass")
