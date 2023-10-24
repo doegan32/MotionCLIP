@@ -22,6 +22,7 @@ class MOTIONCLIP(nn.Module):
         self.decoder = decoder
 
         self.outputxyz = outputxyz
+        print("self.outputxyz: ", self.outputxyz)
 
         self.lambdas = lambdas
         self.clip_lambdas = clip_lambdas

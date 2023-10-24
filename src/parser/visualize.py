@@ -88,6 +88,8 @@ def parser(checkpoint=True):
 
     adding_cuda(parameters)
 
+    parameters["device"] = "cuda"
+
     if checkpoint:
         parameters["figname"] = construct_figname(parameters)
         epoch = int(checkpoint.split("_")[-1].split('.')[0])

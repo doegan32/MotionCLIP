@@ -41,6 +41,7 @@ def add_shadow(img, shadow=15):
 
 
 def load_anim(path, timesize=None):
+    print(path)
     data = np.array(imageio.mimread(path, memtest=False))[..., :3]
     if timesize is None:
         return data
@@ -123,8 +124,8 @@ def plot_3d_motion(motion, length, save_path, params, title="", interval=50, pal
         kinematic_tree = None
 
     def update(index):
-        ax.lines = []
-        ax.collections = []
+        # ax.lines = []
+        # ax.collections = []
         if kinematic_tree is not None:
             for chain, color in zip(kinematic_tree, colors):
                 ax.plot(motion[chain, 0, index],

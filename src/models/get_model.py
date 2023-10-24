@@ -6,6 +6,10 @@ JOINTSTYPES = ["a2m", "a2mpl", "smpl", "vibe", "vertices"]
 LOSSES = ["rc", "rcxyz", "vel", "velxyz"]  # not used: "hp", "mmd", "vel", "velxyz"
 
 def get_model(parameters, clip_model):
+    print(parameters)
+    parameters['njoints'] = 25
+    parameters['nfeats'] = 6
+    parameters['num_classes'] = 1
     encoder = Encoder_TRANSFORMER(**parameters)
     decoder = Decoder_TRANSFORMER(**parameters)
     parameters["outputxyz"] = "rcxyz" in parameters["lambdas"]

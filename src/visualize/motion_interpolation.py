@@ -19,8 +19,8 @@ plt.switch_backend('agg')
 def main():
     # parse options
     parameters, folder, checkpointname, epoch = parser()
-    gpu_device = get_gpu_device()
-    parameters["device"] = f"cuda:{gpu_device}"
+    # gpu_device = get_gpu_device()
+    # parameters["device"] = f"cuda:{gpu_device}"
     model, datasets = get_model_and_data(parameters, split='all')
     num_stops = 5  # FIXME - hardcoded
 

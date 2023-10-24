@@ -163,9 +163,9 @@ def read_single_sequence(split_name, dataset_name, folder, seq_name, body_models
 
             # Seq. labels
             seq_raw_labels, seq_proc_label, seq_act_cat = [], [], []
-            frame_raw_text_labels = np.full(data['poses'].shape[0], "", dtype=np.object)
-            frame_proc_text_labels = np.full(data['poses'].shape[0], "", dtype=np.object)
-            frame_action_cat = np.full(data['poses'].shape[0], "", dtype=np.object)
+            frame_raw_text_labels = np.full(data['poses'].shape[0], "", dtype=object) # np.object
+            frame_proc_text_labels = np.full(data['poses'].shape[0], "", dtype=object) # np.object
+            frame_action_cat = np.full(data['poses'].shape[0], "", dtype=object) # np.object
 
             for label_dict in babel_dict['seq_ann']['labels']:
                 seq_raw_labels.extend([label_dict['raw_label']])
@@ -271,7 +271,8 @@ def get_babel_labels(babel_dir_path):
         path = os.path.join(babel_dir_path, file + '.json')
         data = json.load(open(path))
         for seq_id, seq_dict in data.items():
-            npz_path = os.path.join(*(seq_dict['feat_p'].split(os.path.sep)[1:]))
+            #npz_path = os.path.join(*(seq_dict['feat_p'].split(os.path.sep)[1:]))
+            npz_path = os.path.join(*(seq_dict['feat_p'].split('/')[1:]))
             seq_dict['split'] = file
             pose_file_to_babel[npz_path] = seq_dict
     print("DONE! - Loading babel labels")

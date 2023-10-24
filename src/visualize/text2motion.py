@@ -16,8 +16,10 @@ plt.switch_backend('agg')
 def main():
     # parse options
     parameters, folder, checkpointname, epoch = parser()
-    gpu_device = get_gpu_device()
-    parameters["device"] = f"cuda:{gpu_device}"
+    print("Parameters: ", parameters)
+    print("Folder: ", folder)
+    #gpu_device = get_gpu_device()
+    #parameters["device"] = f"cuda:{gpu_device}"
     model, datasets = get_model_and_data(parameters, split='vald')
 
     print("Restore weights..")
@@ -29,10 +31,12 @@ def main():
     with open(parameters['input_file'], 'r') as fr:
         texts = fr.readlines()
     texts = [s.replace('\n', '') for s in texts]
+    print(texts)
     grid = []
     for i in range(len(texts) // 4 + (len(texts) % 4 != 0)):
         grid.append(texts[i * 4:(i + 1) * 4])
     grid[-1] += [''] * (4 - len(grid[-1]))
+    print(grid)
 
     viz_clip_text(model, grid, epoch, parameters, folder=folder)
 
