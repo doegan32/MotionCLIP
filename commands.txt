@@ -1,0 +1,1 @@
+python -m src.train.train --batch_size 1 --num_epochs 1 --lr 1 --snapshot 1 --dataset amass --num_frames 60 --pose_rep rot6d

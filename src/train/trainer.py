@@ -23,14 +23,42 @@ def train_or_test(model, optimizer, iterator, device, mode="train"):
     else:
         raise ValueError("This mode is not recognized.")
 
+    print("train_or_test")
+    print(mode)
+    print(grad_env)
+
     # loss of the epoch
     dict_loss = {}
     with grad_env():
+        print("are we in with")
+        print(len(iterator))
+
+        for i, t in enumerate(iterator):
+            print(i)
+
         for i, batch in tqdm(enumerate(iterator), desc="Computing batch"):
+
+            print("in training")
+            print(i, type(batch))
 
             # Put everything in device
             # Added if is_tensor as 'clip_text' in batch is a list of strings, not a tensor!
             batch = {key: val.to(device) if torch.is_tensor(val) else val for key, val in batch.items()}
+
+            print("in training")
+            print(type(batch))
+            for k in batch.keys():
+                print(k, type(batch[k]))
+
+            print("ending batch")
+            print("x", batch['x'].shape)
+            print("y", batch['y'].shape)
+            print("mask", batch['mask'].shape)
+            print("lengths", batch['lengths'].shape)
+            print("clip_images", batch['clip_images'].shape)
+            print("clip_text", len(batch['clip_text']))
+            print("clip_path", len(batch['clip_path']))
+
 
             if mode == "train":
                 # update the gradients to zero
@@ -56,12 +84,14 @@ def train_or_test(model, optimizer, iterator, device, mode="train"):
                     optimizer.step()
                     clip.model.convert_weights(model.clip_model)
                 else:
+                    print("we aint clip training?")
                     optimizer.step()
 
     return dict_loss
 
 
 def train(model, optimizer, iterator, device):
+    print("in training")
     return train_or_test(model, optimizer, iterator, device, mode="train")
 
 

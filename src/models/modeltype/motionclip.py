@@ -21,7 +21,7 @@ class MOTIONCLIP(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
 
-        self.outputxyz = outputxyz
+        self.outputxyz = outputxyz # True for viz_clip_text anwways
         print("self.outputxyz: ", self.outputxyz)
 
         self.lambdas = lambdas
@@ -47,12 +47,16 @@ class MOTIONCLIP(nn.Module):
         self.losses = list(self.lambdas) + ["mixed"]
 
         self.rotation2xyz = Rotation2xyz(device=self.device)
-        self.param2xyz = {"pose_rep": self.pose_rep,
-                          "glob_rot": self.glob_rot,
-                          "glob": self.glob,
-                          "jointstype": self.jointstype,
-                          "translation": self.translation,
-                          "vertstrans": self.vertstrans}
+        self.param2xyz = {"pose_rep": self.pose_rep, # rot6d
+                          "glob_rot": self.glob_rot, #  [3.141592653589793, 0, 0]
+                          "glob": self.glob, # True
+                          "jointstype": self.jointstype, # smpl
+                          "translation": self.translation, # True
+                          "vertstrans": self.vertstrans} # False
+        
+        print("param2xyz")
+        for key in self.param2xyz.keys():
+            print(key,self.param2xyz[key] )
 
     def rot2xyz(self, x, mask, get_rotations_back=False, **kwargs):
         kargs = self.param2xyz.copy()
@@ -64,7 +68,9 @@ class MOTIONCLIP(nn.Module):
         # compute all losses other than clip
         mixed_loss = 0.
         losses = {}
+        print("computer losses")
         for ltype, lam in self.lambdas.items():
+            print(ltype)
             loss_function = get_loss_function(ltype)
             loss = loss_function(self, batch)
             mixed_loss += loss * lam
@@ -223,11 +229,11 @@ class MOTIONCLIP(nn.Module):
         print("mask: ", mask.shape)
         print(torch.sum(mask * 1.0))
 
-        batch = {"z": clip_features,  # fact*z, # 24 x 512
+        batch = {"z": clip_features,  #  24 x 512
                  
                  "y": y,                # 24 x 12 just clip features as well, i.e. z and y are the same (at least for text2motion)
-                 "mask": mask, 
-                 "lengths": lengths}
+                 "mask": mask,  #  24 x 120
+                 "lengths": lengths}  # 24
         
 
 
@@ -240,16 +246,24 @@ class MOTIONCLIP(nn.Module):
 
 
         batch = self.decoder(batch)
+        print("back to generator for output: ")
+        for key in batch.keys():
+            print(key, batch[key].shape)
+
+        # keys are z,y,mask,lengths, output where output shape is 24 x 25 x 6 x 120 (batch, jpints, features, frames)
+     
 
         if is_amass:  # lose global orientation for amass dataset
             batch['output'][:, 0] = torch.tensor([1, 0, 0, 0, -1, 0]).unsqueeze(0).unsqueeze(2)
+            print("batch['output'][:, 0] ", batch['output'][:, 0].shape)
 
-        if self.outputxyz:
+        if self.outputxyz: # true
             batch["output_xyz"] = self.rot2xyz(batch["output"], batch["mask"])
+            print(" batch[output_xyz] ",  batch["output_xyz"].shape) # 24 x 24 x 3 x 120 - so we lose one joint here
         elif self.pose_rep == "xyz":
             batch["output_xyz"] = batch["output"]
 
-        return batch
+        return  batch
 
     def generate_from_embedding(self, classes, durations, nspa=1, is_amass=False, classes_gaussians=None):
 
@@ -296,6 +310,9 @@ class MOTIONCLIP(nn.Module):
             batch["x_xyz"] = batch["x"]
         # encode
         batch.update(self.encoder(batch))
+
+        print("output of forward pass encoder")
+        print(" batch[mu] ",  batch["mu"].shape)
 
         batch["z"] = batch["mu"]
         # decode

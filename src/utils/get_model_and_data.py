@@ -24,6 +24,8 @@ def get_model_and_data(parameters, split="train"):
         for p in clip_model.parameters():
             p.requires_grad = False
 
-    # datasets = get_datasets(parameters, clip_preprocess, split)
+    print("split: ", split)
+    datasets = get_datasets(parameters, clip_preprocess, split)
     model = get_gen_model(parameters, clip_model)
-    return model, None
+    print("type(model): ", type(model))
+    return model, datasets

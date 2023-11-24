@@ -20,7 +20,7 @@ def parser():
 def construct_checkpointname(parameters, folder):
     implist = [parameters["modelname"],
                parameters["dataset"],
-               parameters["extraction_method"],
+               #parameters["extraction_method"],
                parameters["pose_rep"]]
     if parameters["pose_rep"] != "xyz":
         # [True, ""] to be compatible with generate job

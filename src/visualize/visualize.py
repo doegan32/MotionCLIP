@@ -299,16 +299,22 @@ def viz_clip_text(model, text_grid, epoch, params, folder):
     classes = np.array(text_grid, dtype=str)
     h, w = classes.shape
 
-    texts = classes.reshape([-1])
-    print("texts: ", texts)
-    print(texts.shape)
-    texts = []
-    for i in range(24):
-        texts.append("side step")
+
+    h = 1
+    w = 1
+    texts = ["fosbury flop"]
+
+    #texts = classes.reshape([-1])
+    # print("texts: ", texts)
+    # print(texts.shape)
+    # texts = []
+    # for i in range(24):
+    #     texts.append("side step")
     texts = np.array(texts, dtype=str)
-    clip_tokens = clip.tokenize(texts).to(params['device'])
+    print("teeeexts ", texts)
+    clip_tokens = clip.tokenize(texts).to(params['device']) # 24 x 77
     print("clip_tokens ", clip_tokens.size())
-    clip_features = model.clip_model.encode_text(clip_tokens).float().unsqueeze(0)
+    clip_features = model.clip_model.encode_text(clip_tokens).float().unsqueeze(0) # 1 x 24 x 512
     print("clip_features ", clip_features.size())
 
     gendurations = torch.ones((h*w, 1), dtype=int) * params['num_frames']
@@ -320,12 +326,13 @@ def viz_clip_text(model, text_grid, epoch, params, folder):
     model.eval()
     with torch.no_grad():
 
-        generation = model.generate(clip_features, gendurations,
+        generation = model.generate(clip_features, gendurations, # clip_features are 24 x 77, gendurations are 24 x 1 - each is just nframes
                                     is_amass=True,
 
                                     is_clip_features=True)
-        generation['y'] = texts
         print("Generation: ", type(generation))
+        generation['y'] = texts
+        
         print(generation.keys())
 
     for key, val in generation.items():
@@ -334,6 +341,13 @@ def viz_clip_text(model, text_grid, epoch, params, folder):
         else:
             generation[key] = val.reshape(h, w, *val.shape[1:])
 
+    # generatiion:
+    # z  6 x 4 x 512
+    # y 6 x 4
+    # mask  6 x 4 120
+    # lenthghts 6 x 4
+    # output 6 x 4 x 25 x 6 x 120
+    # output_xyz 6 x 4 x 24 x 3 x 120
 
     for key, val in generation.items():
         print(key, val.shape) 
@@ -354,18 +368,20 @@ def viz_clip_text(model, text_grid, epoch, params, folder):
     parents, _ = GetSkeletonInformation("amass")
     positions = np.moveaxis(joint_sequence, 2, 0)
     positions[:,:,1] = - positions[:,:,1]
-    PlotAnimation(parents = parents, positions=np.moveaxis(joint_sequence, 2, 0), filename="testing.gif")
+    # positions = np.moveaxis(joint_sequence, 2, 0)
+    print(positions.shape)
+    PlotAnimation(parents = parents, positions=positions, skeleton=None, filename="interp.gif") #"testing.gif") #"testing.gif
     #render_video(joint_sequence, 'output.mp4')
 
-    input(2)
+    # input(2)
 
-    print("Generate the videos..")
-    frames = generate_by_video({}, {}, generation,
-                               lambda x: str(x), params, w, h, tmp_path, mode='text')
+    # print("Generate the videos..")
+    # frames = generate_by_video({}, {}, generation,
+    #                            lambda x: str(x), params, w, h, tmp_path, mode='text')
 
 
-    print(f"Writing video [{finalpath}]")
-    imageio.mimsave(finalpath, frames, fps=params["fps"])
+    # print(f"Writing video [{finalpath}]")
+    # imageio.mimsave(finalpath, frames, fps=params["fps"])
 
 
 def viz_clip_interp(model, datasets, interp_csv, num_stops, epoch, params, folder):
@@ -396,7 +412,10 @@ def viz_clip_interp(model, datasets, interp_csv, num_stops, epoch, params, folde
         texts = texts[:1] + [' '] * (num_stops-2) + texts[-1:]
         all_texts.append(texts)
 
+    print("all_texts: ", all_texts)
+
     all_clip_features = torch.transpose(torch.stack(all_clip_features, axis=0), 0, 1)
+    print("all_clip_features: ", all_clip_features.shape)
     all_texts = np.array(all_texts).T
     h, w = all_clip_features.shape[:2]
     gendurations = torch.ones((h*w, 1), dtype=int) * params['num_frames']
@@ -415,6 +434,16 @@ def viz_clip_interp(model, datasets, interp_csv, num_stops, epoch, params, folde
             generation[key] = val.reshape(h, w)
         else:
             generation[key] = val.reshape(h, w, *val.shape[1:])
+
+    joint_sequence = generation['output_xyz'][2, 1].reshape(24, 3, params['num_frames'])
+    joint_sequence = joint_sequence.cpu().numpy()
+    print("joint_sequence ", joint_sequence.shape)
+    parents, _ = GetSkeletonInformation("amass")
+    positions = np.moveaxis(joint_sequence, 2, 0)
+    positions[:,:,1] = - positions[:,:,1]
+    # positions = np.moveaxis(joint_sequence, 2, 0)
+    print(positions.shape)
+    PlotAnimation(parents = parents, positions=positions, skeleton=None, filename="interp.gif") #"testing.gif") #"testing.gif
 
     if os.path.isfile(params['input_file']):
         f_name = os.path.basename(params['input_file'].replace('.csv', ''))
@@ -447,7 +476,9 @@ def viz_clip_edit(model, datasets, edit_csv, epoch, params, folder):
         # Get CLIP features
         texts = [line['base'], line['v_start'], line['v_end']]
         if line['motion_source'] == 'data':
-            retrieved_motions = retrieve_motions(datasets, motion_collection, texts, params['device'])
+            retrieved_motions = retrieve_motions(datasets, motion_collection, texts, params['device']) # 3 x 25 x 6 x 500
+            print("retrieved_motions: ", type(retrieved_motions))
+            print("retrieved_motions: ", retrieved_motions.shape)
             clip_features = encode_motions(model, retrieved_motions, params['device'])
         elif line['motion_source'] == 'text':
             clip_tokens = clip.tokenize(texts).to(params['device'])

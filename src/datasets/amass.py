@@ -136,9 +136,10 @@ def get_trans_from_vibe(vibe, use_z=True):
 class AMASS(Dataset):
     dataname = "amass"
 
-    def __init__(self, datapath="data/amass/amass_30fps_legacy_db.pt", split="train", use_z=1, **kwargs):
+    def __init__(self, datapath="data/amass_db/amass_30fps_db.pt", split="train", use_z=1, **kwargs):
         assert '_db.pt' in datapath
         self.datapath = datapath.replace('_db.pt', '_{}.pt'.format(split))
+        print("self.datapath :", self.datapath)
         assert os.path.exists(self.datapath)
         print('datapath used by amass is [{}]'.format(self.datapath))
         super().__init__(**kwargs)
@@ -161,6 +162,21 @@ class AMASS(Dataset):
         self.num_classes = len(dummy_class)
 
         self.db = self.load_db()
+
+        for k in self.db.keys():
+            print(k, type(self.db[k]), print(len(self.db[k]))) # each of these is a list
+        print(type(self.db["thetas"][0]))
+        print(self.db["thetas"][0].shape)
+        print(self.db["thetas"][1000].shape)
+        print(self.db["thetas"][5000].shape)
+        print(self.db["thetas"][6899].shape)
+        print(self.db["thetas"][0])
+
+        # print(self.db["action_cat"][:1])
+        print("joints3d", self.db["joints3d"][0].shape)
+        print("poses ",self.db["thetas"][0].shape)
+  
+ 
         self._joints3d = []
         self._poses = []
         self._num_frames_in_video = []
@@ -177,13 +193,14 @@ class AMASS(Dataset):
 
         seq_len = 100
         n_sequences = len(self.db['thetas'])
+        print("n_sequences ", n_sequences)
         # split sequences
         for seq_idx in range(n_sequences):
             n_sub_seq = self.db['thetas'][seq_idx].shape[0] // seq_len
             if n_sub_seq == 0: continue
             n_frames_in_use = n_sub_seq * seq_len
-            joints3d = np.split(self.db['joints3d'][seq_idx][:n_frames_in_use], n_sub_seq)
-            poses = np.split(self.db['thetas'][seq_idx][:n_frames_in_use], n_sub_seq)
+            joints3d = np.split(self.db['joints3d'][seq_idx][:n_frames_in_use], n_sub_seq) # is this positions?
+            poses = np.split(self.db['thetas'][seq_idx][:n_frames_in_use], n_sub_seq) # and this rotations or mabe velocities?
             self._joints3d.extend(joints3d)
             self._poses.extend(poses)
             self._num_frames_in_video.extend([seq_len] * n_sub_seq)
@@ -191,23 +208,24 @@ class AMASS(Dataset):
             if 'action_cat' in self.db:
                 self._actions_cat.extend(np.split(self.db['action_cat'][seq_idx][:n_frames_in_use], n_sub_seq))
 
-            if self.use_betas:
+            if self.use_betas: #NO
                 self._betas.extend(np.split(self.db['betas'][seq_idx][:n_frames_in_use], n_sub_seq))
-            if self.use_gender:
+            if self.use_gender:#NO
                 self._genders.extend([str(self.db['genders'][seq_idx]).replace("b'female'", "female").replace("b'male'",
                                                                                                               "male")] * n_sub_seq)
-            if self.use_body_features:
+            if self.use_body_features:#NO
                 self._heights.extend([self.db['heights'][seq_idx]] * n_sub_seq)
                 self._masses.extend([self.db['masses'][seq_idx]] * n_sub_seq)
+
             if 'clip_images' in self.db.keys():
                 images = [np.squeeze(e) for e in np.split(self.db['clip_images'][seq_idx][:n_sub_seq], n_sub_seq)]
                 processed_images = [self.clip_preprocess(Image.fromarray(img)) for img in images]
                 self._clip_images.extend(processed_images)
             if self.clip_label_text in self.db:
                 self._clip_texts.extend(np.split(self.db[self.clip_label_text][seq_idx][:n_frames_in_use], n_sub_seq))
-            if 'clip_pathes' in self.db:
+            if 'clip_pathes' in self.db: 
                 self._clip_pathes.extend(np.split(self.db['clip_pathes'][seq_idx][:n_sub_seq], n_sub_seq))
-            if 'clip_images_emb' in self.db.keys():
+            if 'clip_images_emb' in self.db.keys(): # no
                 self._clip_images_emb.extend(np.split(self.db['clip_images_emb'][seq_idx][:n_sub_seq], n_sub_seq))
 
 
@@ -216,14 +234,19 @@ class AMASS(Dataset):
             self._actions.extend(actions)
 
         assert len(self._num_frames_in_video) == len(self._poses) == len(self._joints3d) == len(self._actions)
-        if self.use_betas:
+
+        print("POSEEEEEES ", len(self._poses))
+        print(type(self._poses[0]))
+        print(self._poses[0].shape)
+
+        if self.use_betas: # no
             assert len(self._poses) == len(self._betas)
-        if self.use_gender:
+        if self.use_gender: # n0
             assert len(self._poses) == len(self._genders)
         if 'clip_images' in self.db.keys():
             assert len(self._poses) == len(self._clip_images)
 
-        self._actions = np.array(self._actions)
+        self._actions = np.array(self._actions) # don't care
         self._num_frames_in_video = np.array(self._num_frames_in_video)
 
         N = len(self._poses)
@@ -249,6 +272,7 @@ class AMASS(Dataset):
         # data_size should be [16275369]
         db_file = self.datapath
         db = joblib.load(db_file)
+        print("db: ", type(db))
 
         if 'clip_images' in db and db['clip_images'][0] is None:  # No images added
             del db['clip_images']

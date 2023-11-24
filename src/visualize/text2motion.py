@@ -38,6 +38,8 @@ def main():
     grid[-1] += [''] * (4 - len(grid[-1]))
     print(grid)
 
+    #grid = [['walk', 'walk'], ['run', 'run']]
+
     viz_clip_text(model, grid, epoch, parameters, folder=folder)
 
 

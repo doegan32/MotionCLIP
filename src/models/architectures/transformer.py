@@ -9,12 +9,22 @@ class PositionalEncoding(nn.Module):
         super(PositionalEncoding, self).__init__()
         self.dropout = nn.Dropout(p=dropout)
 
-        pe = torch.zeros(max_len, d_model)
-        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model))
-        pe[:, 0::2] = torch.sin(position * div_term)
-        pe[:, 1::2] = torch.cos(position * div_term)
-        pe = pe.unsqueeze(0).transpose(0, 1)
+        pe = torch.zeros(max_len, d_model) # 5000 x 512 
+        position = torch.arange(0, max_len, dtype=torch.float).unsqueeze(1) # 5000 x 1
+        print("pe ", pe.shape)
+        print("position ", position.shape)
+
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * (-np.log(10000.0) / d_model)) # 256
+
+        print("div_term ", div_term.shape) 
+        print("pe[:, 0::2] ", pe[:, 0::2].shape)
+        print("torch.sin(position * div_term) ", torch.sin(position * div_term).shape)
+
+        pe[:, 0::2] = torch.sin(position * div_term) # 5000 x 256 even dimensions
+        pe[:, 1::2] = torch.cos(position * div_term) # odd dimensions
+        pe = pe.unsqueeze(0).transpose(0, 1) # 5000 x 1 x 512
+
+        print("pe_final ", pe.shape)
         
         self.register_buffer('pe', pe)
 
@@ -115,45 +125,45 @@ class Decoder_TRANSFORMER(nn.Module):
                  ablation=None, **kargs):
         super().__init__()
 
-        self.modeltype = modeltype
+        self.modeltype = modeltype # cvae
         print("modeltype ", modeltype)
-        self.njoints = njoints
-        print("njoints ", njoints)
-        self.nfeats = nfeats
-        print("nfeats ", nfeats)
-        self.num_frames = num_frames
+        self.njoints = njoints  #25
+        print("njoints ", njoints) 
+        self.nfeats = nfeats   # 6
+        print("nfeats ", nfeats) 
+        self.num_frames = num_frames # 120
         print("num_frames ", num_frames)
-        self.num_classes = num_classes
+        self.num_classes = num_classes # 1
         print("num_classes ", num_classes)
         
-        self.pose_rep = pose_rep
+        self.pose_rep = pose_rep # 6d
         print("pose_rep ", pose_rep)
-        self.glob = glob
+        self.glob = glob # True
         print("glob ", glob)
-        self.glob_rot = glob_rot
+        self.glob_rot = glob_rot # [3.141592653589793, 0, 0]
         print("glob_rot ", glob_rot)
-        self.translation = translation
+        self.translation = translation # true
         print("translation ", translation)
         
-        self.latent_dim = latent_dim
+        self.latent_dim = latent_dim # 512
         print("latent_dim ", latent_dim)
         
-        self.ff_size = ff_size
+        self.ff_size = ff_size # 1024
         print("ff_size ", ff_size)
-        self.num_layers = num_layers
+        self.num_layers = num_layers # 8
         print("num_layers ", num_layers)
-        self.num_heads = num_heads
+        self.num_heads = num_heads # 4
         print("num_heads ", num_heads)
-        self.dropout = dropout
+        self.dropout = dropout # 0.1
         print("dropout ", dropout)
 
-        self.ablation = ablation
+        self.ablation = ablation # None
         print("ablation ", ablation)
 
-        self.activation = activation
+        self.activation = activation # gelu
         print("activation ", activation)
                 
-        self.input_feats = self.njoints*self.nfeats
+        self.input_feats = self.njoints*self.nfeats # 150
         print("self.input_feats ", self.input_feats)
 
         # only for ablation / not used in the final model
@@ -179,12 +189,15 @@ class Decoder_TRANSFORMER(nn.Module):
         self.finallayer = nn.Linear(self.latent_dim, self.input_feats)
         
     def forward(self, batch, use_text_emb=False):
-        z, y, mask, lengths = batch["z"], batch["y"], batch["mask"], batch["lengths"]
+        print("in decoder now")
+        z, y, mask, lengths = batch["z"], batch["y"], batch["mask"], batch["lengths"] # z: 24 x 512 (clip embedding) y: 24 x 12 (also clip embedding?) mask 24 x 120 # lengths 24
         if use_text_emb:
             z = batch["clip_text_emb"]
-        latent_dim = z.shape[1]
-        bs, nframes = mask.shape
-        njoints, nfeats = self.njoints, self.nfeats
+        latent_dim = z.shape[1] # 512
+        print("latent_dim ", latent_dim)
+        bs, nframes = mask.shape # 24, 120
+        print("bs, nframes ",bs, nframes )
+        njoints, nfeats = self.njoints, self.nfeats # 25, 6
 
         # only for ablation / not used in the final model
         if self.ablation == "zandtime":
@@ -198,9 +211,12 @@ class Decoder_TRANSFORMER(nn.Module):
                 # sequence of size 2
                 z = torch.stack((z, self.actionBiases[y]), axis=0)
             else:
+                print("no ablation???")
                 z = z[None]  # sequence of size 1  #
+                print(z.shape) # 1 x 24 x 512
 
-        timequeries = torch.zeros(nframes, bs, latent_dim, device=z.device)
+        timequeries = torch.zeros(nframes, bs, latent_dim, device=z.device) # 120 x 24 x 512
+        print("timequeries ", timequeries.shape )
         
         # only for ablation / not used in the final model
         if self.ablation == "time_encoding":
@@ -209,13 +225,23 @@ class Decoder_TRANSFORMER(nn.Module):
             timequeries = self.sequence_pos_encoder(timequeries)
         
         output = self.seqTransDecoder(tgt=timequeries, memory=z,
-                                      tgt_key_padding_mask=~mask)
+                                      tgt_key_padding_mask=~mask) # 120 x 24 x 512
         
-        output = self.finallayer(output).reshape(nframes, bs, njoints, nfeats)
+        print("transformer output: ", output.shape)
+        
+        output = self.finallayer(output) # 120 x 24 x 150
+        print("decoder output original: ", output.shape )
+        
+        output = output.reshape(nframes, bs, njoints, nfeats) # 120 x 24 x 25 x 6
+
+        print("transformer output reshaped: ", output.shape)
         
         # zero for padded area
-        output[~mask.T] = 0
-        output = output.permute(1, 2, 3, 0)
+        output[~mask.T] = 0 # this is none
+        print("output mask :", output[~mask.T])
+        output = output.permute(1, 2, 3, 0) # 24 x 25 x 6 x 120
+
+        print("final output shape: ", output.shape)
 
         if use_text_emb:
             batch["txt_output"] = output

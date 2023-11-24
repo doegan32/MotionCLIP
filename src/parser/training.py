@@ -9,10 +9,10 @@ from .checkpoint import construct_checkpointname
 
 def add_training_options(parser):
     group = parser.add_argument_group('Training options')
-    group.add_argument("--batch_size", type=int, required=True, help="size of the batches")
-    group.add_argument("--num_epochs", type=int, required=True, help="number of epochs of training")
-    group.add_argument("--lr", type=float, required=True, help="AdamW: learning rate")
-    group.add_argument("--snapshot", type=int, required=True, help="frequency of saving model/viz")
+    group.add_argument("--batch_size", type=int, required=True, default = 20, help="size of the batches")
+    group.add_argument("--num_epochs", type=int, required=True, default=100, help="number of epochs of training")
+    group.add_argument("--lr", type=float, required=True, default=0.0001, help="AdamW: learning rate")
+    group.add_argument("--snapshot", type=int, required=True, default=10, help="frequency of saving model/viz")
     
 
 def parser():
@@ -64,5 +64,8 @@ def parser():
     save_args(parameters, folder=parameters["folder"])
 
     adding_cuda(parameters)
+
+
+    print(parameters["batch_size"])
     
     return parameters
