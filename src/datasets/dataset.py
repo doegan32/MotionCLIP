@@ -102,13 +102,13 @@ class Dataset(torch.utils.data.Dataset):
 
     def _load(self, ind, frame_ix):
         pose_rep = self.pose_rep
-        print("pose_rep ", pose_rep)
+        #print("pose_rep ", pose_rep)
         if pose_rep == "xyz" or self.translation: # translation is true
             if getattr(self, "_load_joints3D", None) is not None:
                 # Locate the root joint of initial pose at origin # weird to do for up
-                print("Do we get _load_joints3D? ")
+                #print("Do we get _load_joints3D? ")
                 joints3D = self._load_joints3D(ind, frame_ix)
-                print(joints3D.shape)
+                #print(joints3D.shape)
                 joints3D = joints3D - joints3D[0, 0, :]
                 ret = to_torch(joints3D)
                 if self.translation:
@@ -126,7 +126,7 @@ class Dataset(torch.utils.data.Dataset):
                 raise ValueError("This representation is not possible.")
             else:
                 pose = self._load_rotvec(ind, frame_ix)
-                print("POSE SHAOE IS NOW ", pose.shape)
+                #print("POSE SHAOE IS NOW ", pose.shape)
                 if not self.glob:
                     pose = pose[:, 1:, :]
                 pose = to_torch(pose)
@@ -140,12 +140,12 @@ class Dataset(torch.utils.data.Dataset):
                     ret = geometry.matrix_to_rotation_6d(geometry.axis_angle_to_matrix(pose))
         if pose_rep != "xyz" and self.translation:
             padded_tr = torch.zeros((ret.shape[0], ret.shape[2]), dtype=ret.dtype)
-            print("padded_tr ", padded_tr.shape)
+            #print("padded_tr ", padded_tr.shape)
             padded_tr[:, :3] = ret_tr
             ret = torch.cat((ret, padded_tr[:, None]), 1)
-            print("ret ", ret.shape)
+            #print("ret ", ret.shape)
         ret = ret.permute(1, 2, 0).contiguous()
-        print(ret.shape)
+        #print(ret.shape)
         return ret.float()
 
     def _get_item_data_index(self, data_index):
@@ -193,24 +193,24 @@ class Dataset(torch.utils.data.Dataset):
 
             elif self.sampling in ["conseq", "random_conseq"]:
                 step_max = (nframes - 1) // (num_frames - 1)
-                print("STEP_MAX ", step_max)
-                print("nframes ", nframes)
-                print("num_frames ", num_frames)
+                # print("STEP_MAX ", step_max)
+                # print("nframes ", nframes)
+                # print("num_frames ", num_frames)
                 if self.sampling == "conseq":
                     if self.sampling_step == -1 or self.sampling_step * (num_frames - 1) >= nframes:
                         step = step_max
                     else:
                         step = self.sampling_step # i think we're here so step = 1
-                        print("if im correct step is 1 ", step)
+                        #print("if im correct step is 1 ", step)
                 elif self.sampling == "random_conseq":
                     step = random.randint(1, step_max)
 
                 lastone = step * (num_frames - 1)
-                print("lastone ", lastone)
+                #print("lastone ", lastone)
                 shift_max = nframes - lastone - 1
-                print("shift_max ", shift_max)
+                #print("shift_max ", shift_max)
                 shift = random.randint(0, max(0, shift_max - 1))
-                print("shift ",shift)
+                #print("shift ",shift)
                 frame_ix = shift + np.arange(0, lastone + 1, step)
 
             elif self.sampling == "random":
@@ -223,9 +223,9 @@ class Dataset(torch.utils.data.Dataset):
                 raise ValueError("Sampling not recognized.")
 
         inp, target = self.get_pose_data(data_index, frame_ix) # inp is (25, 6, 60) where 25th join is (root_pos, 0,0,0)
-        print("get pose data returns:")
-        print("inp ", inp.shape)
-        print(target)
+        # print("get pose data returns:")
+        # print("inp ", inp.shape)
+        # print(target)
 
         output = {'inp': inp, 'target': target}
         if hasattr(self, 'db') and 'clip_images' in self.db.keys():
@@ -236,10 +236,10 @@ class Dataset(torch.utils.data.Dataset):
 
         if hasattr(self, 'db') and self.clip_label_text in self.db.keys():
             text_labels = self.get_clip_text(data_index, frame_ix)
-            print("figuring out text_labels")
-            print(type(text_labels))
-            print(len(text_labels))
-            print(text_labels[0])
+            # print("figuring out text_labels")
+            # print(type(text_labels))
+            # print(len(text_labels))
+            # print(text_labels[0])
             text_labels = " and ".join(list(np.unique(text_labels)))
             output['clip_text'] = text_labels
 
@@ -266,11 +266,11 @@ class Dataset(torch.utils.data.Dataset):
             output['clip_text'] = choosen_cat
             output['y'] = action_label_to_idx[choosen_cat]
             output['all_categories'] = all_valid_cats
-        print("finally got to end of getitem")
-        for k in output.keys():
-            print(k, type(output[k]))
+        # print("finally got to end of getitem")
+        # for k in output.keys():
+        #     print(k, type(output[k]))
 
-        print(output)
+        # print(output)
 
         return output
 

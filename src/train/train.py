@@ -35,8 +35,8 @@ def do_epochs(model, datasets, parameters, optimizer, writer):
                 writer.add_scalar(f"Loss/{key}", dict_loss[key], epoch)
 
             epochlog = f"Epoch {epoch}, train losses: {dict_loss}"
-            print(epochlog)
-            print(epochlog, file=logfile)
+            # print(epochlog)
+            # print(epochlog, file=logfile)
 
             if ((epoch % parameters["snapshot"]) == 0) or (epoch == parameters["num_epochs"]):
                 checkpoint_path = os.path.join(parameters["folder"],
@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
     # logging tensorboard
 
-    print("parameters[folder] ", parameters["folder"])
+    # print("parameters[folder] ", parameters["folder"])
     parameters["folder"] = "./exps/"
     writer = SummaryWriter(log_dir=parameters["folder"])
 
@@ -72,27 +72,27 @@ if __name__ == '__main__':
     # print("length of dataset ", len(datasets["train"]))
 
 
-    print(type(datasets))
-    for k in datasets.keys():
-        print(k, type(datasets[k]))
-        for i in [1000,2000,5000,100, 10000, 15000, 20000, 25000]: # range(2):
-            x = datasets[k].__getitem__(i)
-            print(type(x))
-            for j in x.keys():
-                print(j, type(x[j]))
-            print("inp: ", x["inp"].shape)
-            print("target ", x["target"])
-            print("clip_image ", x["clip_image"].shape)
-            print("clip_path ", x["clip_path"])
-            print("clip_text ", x["clip_text"])
+    # print(type(datasets))
+    # for k in datasets.keys():
+    #     print(k, type(datasets[k]))
+    #     for i in [1000,2000,5000,100, 10000, 15000, 20000, 25000]: # range(2):
+    #         x = datasets[k].__getitem__(i)
+    #         print(type(x))
+    #         for j in x.keys():
+    #             print(j, type(x[j]))
+    #         print("inp: ", x["inp"].shape)
+    #         print("target ", x["target"])
+    #         print("clip_image ", x["clip_image"].shape)
+    #         print("clip_path ", x["clip_path"])
+    #         print("clip_text ", x["clip_text"])
 
 
-    # optimizer = torch.optim.AdamW(model.parameters(), lr=parameters["lr"])
+    optimizer = torch.optim.AdamW(model.parameters(), lr=parameters["lr"])
 
-    # print('Total params: %.2fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
-    # print("Training model..")
+    print('Total params: %.2fM' % (sum(p.numel() for p in model.parameters()) / 1000000.0))
+    print("Training model..")
 
-    # do_epochs(model, datasets, parameters, optimizer, writer)
+    do_epochs(model, datasets, parameters, optimizer, writer)
 
     writer.close()
 

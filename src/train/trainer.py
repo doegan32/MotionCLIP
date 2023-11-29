@@ -30,16 +30,9 @@ def train_or_test(model, optimizer, iterator, device, mode="train"):
     # loss of the epoch
     dict_loss = {}
     with grad_env():
-        print("are we in with")
-        print(len(iterator))
-
-        for i, t in enumerate(iterator):
-            print(i)
-
         for i, batch in tqdm(enumerate(iterator), desc="Computing batch"):
 
-            print("in training")
-            print(i, type(batch))
+
 
             # Put everything in device
             # Added if is_tensor as 'clip_text' in batch is a list of strings, not a tensor!
@@ -96,4 +89,5 @@ def train(model, optimizer, iterator, device):
 
 
 def test(model, optimizer, iterator, device):
+    print("in testing")
     return train_or_test(model, optimizer, iterator, device, mode="test")

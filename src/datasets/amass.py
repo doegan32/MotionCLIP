@@ -163,18 +163,18 @@ class AMASS(Dataset):
 
         self.db = self.load_db()
 
-        for k in self.db.keys():
-            print(k, type(self.db[k]), print(len(self.db[k]))) # each of these is a list
-        print(type(self.db["thetas"][0]))
-        print(self.db["thetas"][0].shape)
-        print(self.db["thetas"][1000].shape)
-        print(self.db["thetas"][5000].shape)
-        print(self.db["thetas"][6899].shape)
-        print(self.db["thetas"][0])
+        # for k in self.db.keys():
+        #     print(k, type(self.db[k]), print(len(self.db[k]))) # each of these is a list
+        # print(type(self.db["thetas"][0]))
+        # print(self.db["thetas"][0].shape)
+        # print(self.db["thetas"][1000].shape)
+        # print(self.db["thetas"][5000].shape)
+        # print(self.db["thetas"][6899].shape)
+        # print(self.db["thetas"][0])
 
-        # print(self.db["action_cat"][:1])
-        print("joints3d", self.db["joints3d"][0].shape)
-        print("poses ",self.db["thetas"][0].shape)
+        # # print(self.db["action_cat"][:1])
+        # print("joints3d", self.db["joints3d"][0].shape)
+        # print("poses ",self.db["thetas"][0].shape)
   
  
         self._joints3d = []
@@ -193,7 +193,7 @@ class AMASS(Dataset):
 
         seq_len = 100
         n_sequences = len(self.db['thetas'])
-        print("n_sequences ", n_sequences)
+        # print("n_sequences ", n_sequences)
         # split sequences
         for seq_idx in range(n_sequences):
             n_sub_seq = self.db['thetas'][seq_idx].shape[0] // seq_len
@@ -235,9 +235,9 @@ class AMASS(Dataset):
 
         assert len(self._num_frames_in_video) == len(self._poses) == len(self._joints3d) == len(self._actions)
 
-        print("POSEEEEEES ", len(self._poses))
-        print(type(self._poses[0]))
-        print(self._poses[0].shape)
+        # print("POSEEEEEES ", len(self._poses))
+        # print(type(self._poses[0]))
+        # print(self._poses[0].shape)
 
         if self.use_betas: # no
             assert len(self._poses) == len(self._betas)

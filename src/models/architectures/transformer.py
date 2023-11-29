@@ -93,19 +93,41 @@ class Encoder_TRANSFORMER(nn.Module):
                                                      num_layers=self.num_layers)
 
     def forward(self, batch):
+
+        print("in forwward pass of encoder")
+
         x, y, mask = batch["x"], batch["y"], batch["mask"]
+
+
+        print("x" ,x.shape)
+        print("y ",y.shape)
+        print(y)
+        print("mask ", mask.shape)
+
         bs, njoints, nfeats, nframes = x.shape
         x = x.permute((3, 0, 1, 2)).reshape(nframes, bs, njoints * nfeats)
+
+        print("x ", x.shape)
 
         # embedding of the skeleton
         x = self.skelEmbedding(x)
 
+        print("x ", x.shape)
+
         # Blank Y to 0's , no classes in our model, only learned token
         y = y - y
+        print(self.muQuery[y][None].shape)
+        print(self.muQuery.shape)
+        print(self.sigmaQuery[y][None].shape)
+        print(self.sigmaQuery.shape)
         xseq = torch.cat((self.muQuery[y][None], self.sigmaQuery[y][None], x), axis=0)
+
+        print("xseq", xseq.shape)
 
         # add positional encoding
         xseq = self.sequence_pos_encoder(xseq)
+
+        print("xseq", xseq.shape)
 
         # create a bigger mask, to allow attend to mu and sigma
         muandsigmaMask = torch.ones((bs, 2), dtype=bool, device=x.device)
